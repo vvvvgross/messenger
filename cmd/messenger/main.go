@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/vvvvgross/messenger/internal/httpapi"
+	"github.com/vvvvgross/messenger/internal/storage/postgres"
 )
 
 func main() {
@@ -36,7 +37,17 @@ func run() error {
 		os.Interrupt,
 		syscall.SIGTERM,
 	)
+
 	defer stop()
+
+	pool, err := postgres.NewPool(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return fmt.Errorf("initialize database: %w", err)
+	}
+
+	defer pool.Close()
+
+	slog.Info("PostgreSQL connection established")
 
 	server := &http.Server{
 		Addr:              addr,

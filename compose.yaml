@@ -28,5 +28,21 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    image: migrate/migrate:v4.20.1
+    profiles: ["tools"]
+    volumes:
+      - ./migrations:/migrations:ro
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - migrate
+      - -path=/migrations
+      - -database=postgres://messenger@postgres:5432/messenger?sslmode=disable&connect_timeout=5
+    command: ["version"]
+
 volumes:
   postgres_data:

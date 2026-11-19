@@ -33,6 +33,11 @@ func run() error {
 		return err
 	}
 
+	tokens, err := auth.NewTokenManager(os.Getenv("JWT_SECRET"))
+	if err != nil {
+		return fmt.Errorf("initialize token manager: %w", err)
+	}
+
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		os.Interrupt,
@@ -55,7 +60,7 @@ func run() error {
 
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           httpapi.NewHandler(authService),
+		Handler:           httpapi.NewHandler(authService, tokens),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

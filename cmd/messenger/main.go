@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/vvvvgross/messenger/internal/auth"
 	"github.com/vvvvgross/messenger/internal/httpapi"
 	"github.com/vvvvgross/messenger/internal/storage/postgres"
 )
@@ -49,9 +50,12 @@ func run() error {
 
 	slog.Info("PostgreSQL connection established")
 
+	users := postgres.NewUserRepository(pool)
+	authService := auth.NewService(users)
+
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           httpapi.NewHandler(),
+		Handler:           httpapi.NewHandler(authService),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

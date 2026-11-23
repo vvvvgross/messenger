@@ -16,6 +16,7 @@ func NewHandler(authService *auth.Service, tokens *auth.TokenManager) http.Handl
 
 	mux.HandleFunc("POST /auth/register", newRegisterHandler(authService))
 	mux.HandleFunc("POST /auth/login", newLoginHandler(authService, tokens))
+	mux.Handle("GET /auth/me", requireAuth(tokens, http.HandlerFunc(meHandler)))
 
 	return mux
 }

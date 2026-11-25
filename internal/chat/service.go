@@ -11,9 +11,12 @@ import (
 )
 
 const maxGroupTitleCharacters = 100
+const maxChatListLimit = 100
 
-var ErrInvalidGroupTitle = errors.New(
-	"group title must be valid text containing 1–100 characters",
+var (
+	ErrInvalidGroupTitle = errors.New("group title must be valid text containing 1–100 characters")
+	ErrInvalidListLimit  = errors.New("limit must be between 1 and 100")
+	ErrInvalidListOffset = errors.New("offset must not be negative")
 )
 
 type Service struct {
@@ -46,4 +49,26 @@ func (s *Service) CreateGroup(
 	}
 
 	return group, nil
+}
+
+func (s *Service) ListByUser(
+	ctx context.Context,
+	userID string,
+	limit int,
+	offset int,
+) ([]postgres.Chat, error) {
+	if limit < 1 || limit > maxChatListLimit {
+		return nil, ErrInvalidListLimit
+	}
+
+	if offset < 0 {
+		return nil, ErrInvalidListOffset
+	}
+
+	chats, err := s.chats.ListByUser(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("list user chats: %w", err)
+	}
+
+	return chats, nil
 }

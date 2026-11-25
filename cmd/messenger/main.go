@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/vvvvgross/messenger/internal/auth"
+	"github.com/vvvvgross/messenger/internal/chat"
 	"github.com/vvvvgross/messenger/internal/httpapi"
 	"github.com/vvvvgross/messenger/internal/storage/postgres"
 )
@@ -58,9 +59,12 @@ func run() error {
 	users := postgres.NewUserRepository(pool)
 	authService := auth.NewService(users)
 
+	chats := postgres.NewChatRepository(pool)
+	chatService := chat.NewService(chats)
+
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           httpapi.NewHandler(authService, tokens),
+		Handler:           httpapi.NewHandler(authService, tokens, chatService),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

@@ -79,3 +79,54 @@ func (r *ChatRepository) CreateGroup(
 
 	return chat, nil
 }
+
+func (r *ChatRepository) ListByUser(
+	ctx context.Context,
+	userID string,
+	limit int,
+	offset int,
+) ([]Chat, error) {
+	const query = `
+		SELECT
+			c.id::text,
+			c.kind,
+			c.title,
+			c.created_by::text,
+			c.created_at
+		FROM chats AS c
+		JOIN chat_members AS cm ON cm.chat_id = c.id
+		WHERE cm.user_id = $1
+		ORDER BY c.created_at DESC, c.id DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.pool.Query(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("query user chats: %w", err)
+	}
+	defer rows.Close()
+
+	chats := make([]Chat, 0)
+
+	for rows.Next() {
+		var chat Chat
+
+		if err := rows.Scan(
+			&chat.ID,
+			&chat.Kind,
+			&chat.Title,
+			&chat.CreatedBy,
+			&chat.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan user chat: %w", err)
+		}
+
+		chats = append(chats, chat)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read user chats: %w", err)
+	}
+
+	return chats, nil
+}
